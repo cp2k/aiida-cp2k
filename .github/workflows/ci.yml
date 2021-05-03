@@ -67,7 +67,7 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade pip
-        pip install -e .[pre-commit,test,docs]
+        pip install -e .[cli,pre-commit,test,docs]
         reentry scan
     - name: Run pre-commit
       run: |
@@ -89,7 +89,7 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade pip
-        pip install -e .[docs,test]
+        pip install -e .[cli,docs,test]
         reentry scan
 
     - name: Build docs

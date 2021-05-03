@@ -28,9 +28,20 @@
         ],
         "aiida.workflows": [
             "cp2k.base = aiida_cp2k.workchains:Cp2kBaseWorkChain"
+        ],
+        "aiida.cmdline.data.structure.import": [
+            "cp2k = aiida_cp2k.cli.data.structure:cmd_import"
+        ],
+        "console_scripts": [
+            "aiida-cp2k = aiida_cp2k.cli:cmd_root"
         ]
     },
     "extras_require": {
+        "cli": [
+            "click",
+            "click-completion",
+            "cp2k-input-tools>=0.5"
+        ],
         "test": [
             "pgtest~=1.3",
             "pytest~=6.0",
