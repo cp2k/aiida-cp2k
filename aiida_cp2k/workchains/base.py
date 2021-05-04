@@ -56,7 +56,7 @@ class Cp2kBaseWorkChain(BaseRestartWorkChain):
     def resubmit_unconverged_geometry(self, calc):
         """Resubmit a calculation it is not converged, but can be recovered."""
 
-        self.report("Checking the geometry convergence.")
+        self.report("Entering the process handler.")
 
         content_string = calc.outputs.retrieved.get_object_content(calc.get_attribute('output_filename'))
 
@@ -92,19 +92,60 @@ class Cp2kBaseWorkChain(BaseRestartWorkChain):
             self.report(
                 "The CP2K calculation wasn't completed. The restart of the calculation might be able to "
                 "fix the problem.")
-            return ProcessHandlerReport(False)
+            return ProcessHandlerReport(do_break=True)
 
         # If the problem is not recoverable
         if (time_not_exceeded not in content_string or
                 time_exceeded in content_string) and one_step_done not in content_string:
 
-            self.report("It seems that the restart of CP2K calculation wouldn't be able to fix the problem as the "
-                        "geometry optimization couldn't complete a single step. Sending a signal to stop the Base "
-                        "work chain.")
+            self.report("It seems that the restart of CP2K calculation wouldn't be able to fix the problem. "
+                             "Sending a signal to stop the Base work chain.")
 
             # Signaling to the base work chain that the problem could not be recovered.
             return ProcessHandlerReport(True, ExitCode(1))
 
-        self.report("The geometry seem to be converged.")
         # If everything is alright
+        return None
+
+    @process_handler(priority=350, enabled=False)
+    def resubmit_cellopt_for_final_check(self, calc):
+        """Resubmit a cell optimization if it required more than 3 steps to converge."""
+
+        self.report("Entering the process handler.")
+
+        content_string = calc.outputs.retrieved.get_object_content(calc.get_attribute('output_filename'))
+
+        steps_done = content_string.count('Informations at step')
+
+        self.ctx.inputs.parent_calc_folder = calc.outputs.remote_folder
+        params = self.ctx.inputs.parameters
+
+        too_many_steps = steps_done > 5
+        if too_many_steps:
+            try:
+                # Firts check if all the restart keys are present in the input dictionary
+                wf_rest_fname_pointer = params['FORCE_EVAL']['DFT']['RESTART_FILE_NAME']
+                scf_guess_pointer = params['FORCE_EVAL']['DFT']['SCF']['SCF_GUESS']
+                restart_fname_pointer = params['EXT_RESTART']['RESTART_FILE_NAME']
+
+                # Also check if they all have the right value
+                if not (wf_rest_fname_pointer == './parent_calc/aiida-RESTART.wfn' and
+                    scf_guess_pointer == 'RESTART' and
+                    restart_fname_pointer == './parent_calc/aiida-1.restart'):
+
+                    # If some values are incorrect add them to the input dictionary
+                    params = add_restart_sections(params)
+
+            # If not all the restart keys are present, adding them to the input dictionary
+            except KeyError:
+                params = add_restart_sections(params)
+
+            # Might be able to solve the problem
+            self.ctx.inputs.parameters = params  # params (new or old ones) that for sure
+            # include the necessary restart key-value pairs
+            self.report(
+                "The CP2K cell opt converged but required more than 3 steps."
+                "I will restart it for final convergence")
+            return ProcessHandlerReport(do_break=True)
+
         return None
