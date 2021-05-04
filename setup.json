@@ -27,7 +27,8 @@
             "cp2k_tools_parser = aiida_cp2k.parsers:Cp2kToolsParser"
         ],
         "aiida.workflows": [
-            "cp2k.base = aiida_cp2k.workchains:Cp2kBaseWorkChain"
+            "cp2k.base = aiida_cp2k.workchains:Cp2kBaseWorkChain",
+            "cp2k.bands = aiida_cp2k.workchains:Cp2kBandsWorkChain"
         ]
     },
     "extras_require": {

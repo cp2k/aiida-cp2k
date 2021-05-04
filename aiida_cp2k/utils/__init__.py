@@ -19,3 +19,4 @@ from .workchains import ot_has_small_bandgap
 from .workchains import check_resize_unit_cell
 from .workchains import resize_unit_cell
 from .workchains import HARTREE2EV, HARTREE2KJMOL
+from .workchains import seekpath_structure_analysis, update_input_dict_for_bands
